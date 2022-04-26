@@ -3,6 +3,7 @@
 #include<vector>
 #include <string>
 #include <opencv2/opencv.hpp>
+#include <fstream>
 
 const float confThreshold = 0.25f;
 const float iouThreshold = 0.45f;
@@ -18,6 +19,7 @@ struct SampleParams
 	int32_t dlaCore{ -1 };
 	bool int8{ false };
 	bool fp16{ false };
+	bool savef{ false };
 	//int32_t inputSize{640};
 	std::vector<std::string> inputTensorNames;
 	std::vector<std::string> outputTensorNames;
@@ -27,6 +29,7 @@ struct SampleParams
 	std::string videoWurl{""};
 	std::string loadEngine{"./yolov5s_c++.trt"};
 	std::string saveEngine{""};
+	std::string loadOnnx{"./yolov5s.onnx"};
 
 
 };

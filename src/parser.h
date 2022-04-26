@@ -13,7 +13,7 @@ struct ljlparam /* specification for a long form option...	*/
 static struct ljlparam long_ljlparam[] = {
 	{"imgReadPath", 0, "-ir"},{"imgWritePath", 1, "-iw"}, {"videoReadUrl", 2, "-vr"}, {"videoWriteUrl", 3, "-vw"},
 	{"loadEnginePath", 4, "-le"},{"saveEnginPath",5, "-se"},{"int8", 6, "-i8"}, {"fp16", 7, "-f16"},
-	{"batch", 8, "-b"},{"useDLACore",  9, "-d"}, 
+	{"batch", 8, "-b"},{"useDLACore",  9, "-d"},{"loadOnnxPath", 10, "-lo"}, {"saveFlag", 11, "-sf"}
 };
 
 

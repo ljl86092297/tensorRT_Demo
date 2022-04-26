@@ -83,6 +83,10 @@ bool Parser::paraseArgv(int argc, char** argv, SampleParams& params)
 			params.batchSize = 1; break;
 		case 9:
 			params.dlaCore = 1; break;
+		case 10:
+			params.loadOnnx = res[1]; break;
+		case 11:
+			params.savef = true; break;
 
 		default:
 			break;

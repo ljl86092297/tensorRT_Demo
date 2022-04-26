@@ -1,8 +1,7 @@
 #include "do_inference.h"
 #include "logging.h"
 #include "parser.h"
-
-
+#include "onnx2trt.h"
 
 
 int main(int argc, char** argv)
@@ -22,7 +21,11 @@ int main(int argc, char** argv)
 
 	sample::gLogger.reportTestStart(sampleTest);
 
+	//直接通过tensorrt进行推理
 	yoloRT sample(zparams);
+
+	//通过onnx模型转换为tensorrt  再推理
+	//Onnx2Trt sample(zparams);
 	sample::gLogInfo << "Building and running a GPU inference engine for  yolov5s" << std::endl;
 	if (!sample.doMain())
 	{
