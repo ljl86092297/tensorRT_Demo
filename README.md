@@ -6,6 +6,8 @@ C++ tensorRT_Demo model
 
 2.tensorRT 8.2
 
+3.opencv
+
 
 # 安装：
 git clone https://github.com/ljl86092297/tensorRT_Demo.git
