@@ -30,9 +30,17 @@ public:
 	bool read_build();
 	bool read_infer();
 	bool read_post(); //对预测数据进行处理并可视化到图片中
+
+
 	bool verifyOutput(float* a,const  cv::Size& inputFrameSize, const cv::Size& originaleFrameSize, const float& conf, const float& iou);
 
 	bool doMain();
+
+	~yoloRT()
+	{
+		delete trtModelStream;
+		delete prob;
+	}
 
 private:
 	SampleParams mParams;
@@ -49,7 +57,6 @@ private:
 	std::string inputName;
 	std::string outputName;
 
-	void* buffers[2];
 
 	char* trtModelStream{ nullptr };
 	float* data{ nullptr };

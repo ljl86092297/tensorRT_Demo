@@ -3,11 +3,12 @@
 #include<vector>
 #include <string>
 #include <opencv2/opencv.hpp>
+
 const float confThreshold = 0.25f;
 const float iouThreshold = 0.45f;
 static const int INPUT_H = 640;
 static const int INPUT_W = 640;
-const cv::Size inputsize = cv::Size(640, 640);
+const cv::Size inputsize = cv::Size(INPUT_H, INPUT_W);
 
 
 
@@ -17,11 +18,15 @@ struct SampleParams
 	int32_t dlaCore{ -1 };
 	bool int8{ false };
 	bool fp16{ false };
-	std::vector<std::string> dataDirs;
+	//int32_t inputSize{640};
 	std::vector<std::string> inputTensorNames;
 	std::vector<std::string> outputTensorNames;
-	std::string rpath;
-	std::string wpath;
+	std::string imgRpath{"./bus.jpg"};
+	std::string imgWpath{"./bus_new.jpg"};
+	std::string videoRurl{""};
+	std::string videoWurl{""};
+	std::string loadEngine{"./yolov5s_c++.trt"};
+	std::string saveEngine{""};
 
 
 };
@@ -42,3 +47,8 @@ const std::vector<std::string> clsName = { "person", "bicycle", "car", "motorcyc
 	   "potted plant", "bed", "dining table", "toilet", "tv", "laptop", "mouse", "remote", "keyboard", "cell phone",
 	   "microwave", "oven", "toaster", "sink", "refrigerator", "book", "clock", "vase", "scissors", "teddy bear",
 	   "hair drier", "toothbrush" };
+
+
+
+
+

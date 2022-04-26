@@ -4,6 +4,63 @@
 #include "image.h"
 #include <fstream>
 
+
+
+bool yoloRT::verifyOutput(float* a, const cv::Size& inputFrameSize, const  cv::Size& originaleFrameSize, const float& conf = confThreshold, const float& iou = iouThreshold)
+{
+	size_t nc = mOutputDims.d[2] - 5;
+	size_t count = mOutputDims.d[0] * mOutputDims.d[1] * mOutputDims.d[2];
+	std::vector<float> output(a, a + count);
+	std::cout << output.size() << std::endl;
+
+	std::vector<cv::Rect> boxs;
+	std::vector<int> clsIds;
+	std::vector<float>confs;
+	int elementsInBatch = (int)(mOutputDims.d[1] * mOutputDims.d[2]);
+
+	for (auto it = output.begin(); it != output.end(); it += mOutputDims.d[2])
+	{
+		float objConf = it[4];
+		if (objConf > conf)
+		{
+			int centerX = it[0];
+			int centerY = it[1];
+			int width = it[2];
+			int height = it[3];
+			int left = centerX - width / 2;
+			int top = centerY - height / 2;
+
+			float maxclsConf;
+			int bestclsId;
+
+			getMaxclsConf(it, nc, maxclsConf, bestclsId);
+
+			// co_conf  is class and object ;
+			float co_conf = maxclsConf * objConf;
+
+			confs.emplace_back(co_conf);
+			clsIds.emplace_back(bestclsId);
+			boxs.emplace_back(left, top, width, height);
+
+		}
+	}
+	std::vector<int> indices;
+	cv::dnn::NMSBoxes(boxs, confs, conf, iou, indices);
+	for (int idx : indices)
+	{
+		std::cout << "is idx is ok" << std::endl;
+		Detection det;
+		det.box = cv::Rect(boxs[idx]);
+		det.conf = confs[idx];
+		det.clsId = clsIds[idx];
+
+		scaleBox2OriSize(inputFrameSize, oriImageSize, det.box);
+		detects.emplace_back(det);
+	}
+
+	return true;
+}
+
 bool yoloRT::build()
 {
 	auto builder = SampleUniquePtr<nvinfer1::IBuilder>(nvinfer1::createInferBuilder(sample::gLogger.getTRTLogger()));
@@ -73,7 +130,7 @@ bool yoloRT::build()
 	//序列化engine  并存储成文件。
 	IHostMemory* modelStream{ nullptr };
 	modelStream = mEngine->serialize();
-	std::ofstream p("./yolov5s_c++.trt", std::ios::binary);
+	std::ofstream p(mParams.loadEngine, std::ios::binary);
 
 	p.write(reinterpret_cast<const char*>(modelStream->data()), modelStream->size());
 	//modelStream->destroy();
@@ -135,69 +192,11 @@ bool yoloRT::read_processInput(float*& input, const bool flag)
 
 
 
-
-bool yoloRT::verifyOutput(float* a,const cv::Size& inputFrameSize, const  cv::Size& originaleFrameSize, const float& conf = confThreshold, const float& iou = iouThreshold)
-{
-	size_t nc = mOutputDims.d[2] - 5;
-	size_t count = mOutputDims.d[0] * mOutputDims.d[1] * mOutputDims.d[2];
-	std::vector<float> output(a, a + count);
-	std::cout << output.size() << std::endl;
-
-	std::vector<cv::Rect> boxs;
-	std::vector<int> clsIds;
-	std::vector<float>confs;
-	int elementsInBatch = (int)(mOutputDims.d[1] * mOutputDims.d[2]);
-
-	for (auto it = output.begin(); it != output.end(); it += mOutputDims.d[2])
-	{
-		float objConf = it[4];
-		if (objConf > conf)
-		{
-			std::cout << "is enter" << std::endl;
-			int centerX = it[0];
-			int centerY = it[1];
-			int width = it[2];
-			int height = it[3];
-			int left = centerX - width / 2;
-			int top = centerY - height / 2;
-
-			float maxclsConf;
-			int bestclsId;
-
-			getMaxclsConf(it, nc, maxclsConf, bestclsId);
-
-			// co_conf  is class and object ;
-			float co_conf = maxclsConf * objConf;
-
-			confs.emplace_back(co_conf);
-			clsIds.emplace_back(bestclsId);
-			boxs.emplace_back(left, top, width, height);
-
-		}
-	}
-	std::vector<int> indices;
-	cv::dnn::NMSBoxes(boxs, confs, conf, iou, indices);
-	for (int idx : indices)
-	{
-		std::cout << "is idx is ok" << std::endl;
-		Detection det;
-		det.box = cv::Rect(boxs[idx]);
-		det.conf = confs[idx];
-		det.clsId = clsIds[idx];
-
-		scaleBox2OriSize(inputFrameSize, oriImageSize, det.box);
-		detects.emplace_back(det);
-	}
-
-	return true;
-}
-
-
 //通过读取模型文件进行模型构建
 bool yoloRT::read_build()
 {
 	
-	std::ifstream file("./yolov5s_c++.trt", std::ios::binary);
+	std::ifstream file(mParams.loadEngine, std::ios::binary);
 	//file.good()  返回true则流正常
 	if (file.good())
 	{
@@ -224,12 +223,9 @@ bool yoloRT::read_infer()
 	const int inputIndex = mEngine->getBindingIndex("images");
 	const int outputIndex = mEngine->getBindingIndex("output");
 	mOutputDims = mEngine->getBindingDimensions(outputIndex);
-	std::cout << "mOutputDims:   " << mOutputDims << std::endl;
-	std::cout << "inputIndex:   " << inputIndex << std::endl;
-	std::cout << "outputIndex :   " << outputIndex << std::endl;
+
 	assert(inputIndex == 0);
 	assert(outputIndex == 4);
-
 
 	prob  = new float[mOutputDims.d[0] * mOutputDims.d[1]*mOutputDims.d[2]];
 	read_processInput(data, true);
@@ -251,17 +247,11 @@ bool yoloRT::read_infer()
 	CHECK(cudaMemcpyAsync(prob, buffers[4], mOutputDims.d[0]  *mOutputDims.d[1] * mOutputDims.d[2] * sizeof(float), cudaMemcpyDeviceToHost, stream));
 	cudaStreamSynchronize(stream);
 	cudaStreamDestroy(stream);
-	CHECK(cudaFree(buffers[inputIndex]));
-	CHECK(cudaFree(buffers[outputIndex]));
-	std::cout << "inference sucess" << std::endl;
-	/*if (!verifyOutput(prob, inputsize, oriImageSize))
+	for (int i = 0; i < 5; i++)
 	{
-		std::cout<<"prob parser fail"<<std::endl;
+		CHECK(cudaFree(buffers[i]));
 	}
-
-	Frame fra("./bus_new.jpg");
-	fra.draw(ori_img, detect);*/
-	//fra.writeImg(ori_img);
+	std::cout << "inference sucess" << std::endl;
 	return true;
 }
 
@@ -278,18 +268,17 @@ bool yoloRT::read_post()
 bool yoloRT::doMain()
 {
 	
-	Image img(mParams.rpath);
+	Image img(mParams.imgRpath);
 	ori_img = img.get_oriImage();
 	if (!read_build())
 	{
-		//return sample::gLogger.reportFail(sampleTest);
 		std::cout << "model build defail" << std::endl;
 		return false;
 	}
 	if (!read_infer())
 	{
 		std::cout << "model infer defail" << std::endl;
-		//return sample::gLogger.reportFail(sampleTest);
+
 		return false;
 	}
 	if (!read_post())
@@ -297,14 +286,14 @@ bool yoloRT::doMain()
 		std::cout << "parser output or draw image defail" << std::endl;
 		return false;
 	}
-	img.draw(detects, mParams.wpath);
+	img.draw(detects, mParams.imgWpath);
 	return true;
 }
 
 
 bool yoloRT::infer()
 {
-	cv::Mat ori_img = cv::imread("./bus.jpg");
+	cv::Mat ori_img = cv::imread(mParams.imgRpath);
 	oriImageSize = ori_img.size();
 	std::cout << "oriImageSize   " << oriImageSize << std::endl;
 	Preprocess p;
@@ -350,7 +339,7 @@ bool yoloRT::infer()
 bool yoloRT::constructNetwork(SampleUniquePtr<nvinfer1::IBuilder>& builder, SampleUniquePtr<nvinfer1::INetworkDefinition>& network, SampleUniquePtr<nvinfer1::IBuilderConfig>& config, SampleUniquePtr<nvonnxparser::IParser>& parser)
 {
 
-	string s = "./yolov5s.onnx";
+	string s = "./yolov5.onnx";
 	auto parsed = parser->parseFromFile(s.c_str(), static_cast<int>(sample::gLogger.getReportableSeverity()));
 
 	if (!parsed)
