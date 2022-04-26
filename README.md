@@ -37,8 +37,8 @@ cd build
 
 `cd ../bin`
 
-`./tensorRT_yolov5s `
+`./tensorRT_yolov5s -ir=./ceshi.jpg -iw=./ceshi_new.jpg`
 
 # 生成：
-生成的结果在bin目录下带new的jpg。
+ 执行上述语句会调用bin文件中ceshi.jpg图片进行推理 并将结果存储到ceshi_new.jpg中。
 
