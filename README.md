@@ -39,8 +39,15 @@ cd build
 
 `cd ../bin`
 
+####  一下操作只能选其中一种 参数不能共存 否侧会出现错误。
+##### 图片操作 
+
 `./tensorRT_yolov5s -ir=./ceshi.jpg -iw=./ceshi_new.jpg`
 
+##### 视频操作
+
+`./tensorRT_yolov5s -vr=./test.mp4 -vw=./test_new.mp4`
+
 # 生成：
- 执行上述语句会调用bin文件中ceshi.jpg图片进行推理 并将结果存储到ceshi_new.jpg中。
+ 执行上述语句会调用bin文件中的测试图片或视频 进行推理， 并将推理结果保存在同目录，（视频操作不用 -vw则不保存）。
 
