@@ -54,8 +54,7 @@ cv::Mat Preprocess::preAll(const cv::Mat& image, const cv::Size& image_size)
 {
     cv::Mat media;
     letterbox(image, media);
-    cv::imwrite("./media.jpg", media);
-    std::cout << "media size :" << media.size << std::endl;
+    //cv::imwrite("./media.jpg", media);
     cv::Mat input_data;
     input_data = cv::dnn::blobFromImage(media, 1.0 / 255.0, image_size, cv::Scalar(0, 0, 0), true, false, CV_32F);
     return input_data;
@@ -90,6 +89,6 @@ cv::Mat Preprocess::preprocess_img(cv::Mat& img)
     cv::Mat out(640, 640, CV_8UC3, cv::Scalar(0, 0, 0));
 
     re.copyTo(out(cv::Rect(x, y, re.cols, re.rows)));
-    cv::imwrite("./media.jpg", out);
+    //cv::imwrite("./media.jpg", out);
     return out;
 }

@@ -1,30 +1,6 @@
 #include "image.h"
-#include <iomanip>
-#include <sstream>
 
-//Image::Image(const std::string imgpath) 
-//{
-//    std::cout << "InitImage Object Sucess" << std::endl;
-//    srand(time(0));
-//    for (int i = 0; i < 80; i++) {
-//        int b = rand() % 256;
-//        int g = rand() % 256;
-//        int r = rand() % 256;
-//        color.push_back(cv::Scalar(b, g, r));
-//    }
-//}
-float Image::round(float src, int bits)
-{
-    //std::cout.precision(2);
-    std::stringstream ss;
-    float f;
-    ss << std::fixed << std::setprecision(bits) << src;
-    ss >> f;
-
-    return f;
-
-}
-
+using namespace base;
 
 bool Image::draw( const std::vector<Detection>& dets, const std::string& wimgPath)
 {

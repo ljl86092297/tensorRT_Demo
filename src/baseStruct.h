@@ -4,6 +4,7 @@
 #include <string>
 #include <opencv2/opencv.hpp>
 #include <fstream>
+#include "baseFun.h"
 
 const float confThreshold = 0.25f;
 const float iouThreshold = 0.45f;
@@ -20,6 +21,8 @@ struct SampleParams
 	bool int8{ false };
 	bool fp16{ false };
 	bool savef{ false };
+	bool videoRFlag{ false }; //为true时代表处理数据为视频
+	bool videoSFlag{ false }; 
 	//int32_t inputSize{640};
 	std::vector<std::string> inputTensorNames;
 	std::vector<std::string> outputTensorNames;

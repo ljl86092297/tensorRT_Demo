@@ -1,9 +1,6 @@
 #include "do_inference.h"
 #include "postprocess.h"
 
-#include "image.h"
-
-
 
 bool yoloRT::read_processInput(float*& input, const std::string& path)
 {
@@ -35,7 +32,7 @@ bool yoloRT::read_processInput(float*& input, const bool flag)
 	Preprocess p;
 	cv::Mat pre_img = p.preAll(ori_img, cv::Size(INPUT_H, INPUT_W));
 	input = reinterpret_cast<float*>(pre_img.data);
-	std::cout << "loading img and process img success hava flag" << std::endl;
+	//std::cout << "loading img and process img success hava flag" << std::endl;
 	return true;
 }
 
@@ -79,7 +76,7 @@ bool yoloRT::read_infer()
 	prob  = new float[mOutputDims.d[0] * mOutputDims.d[1]*mOutputDims.d[2]];
 	read_processInput(data, true);
 	void* buffers[5];
-	std::cout << "init getBinding" << std::endl;
+	//std::cout << "init getBinding" << std::endl;
 
 	CHECK(cudaMalloc(&buffers[0], mOutputDims.d[0] * 3 * INPUT_H * INPUT_W * sizeof(float)));
 	CHECK(cudaMalloc(&buffers[1], 1 * 100 * sizeof(float)));
@@ -87,11 +84,11 @@ bool yoloRT::read_infer()
 	CHECK(cudaMalloc(&buffers[3], 1 * 100 * sizeof(float)));
 	CHECK(cudaMalloc(&buffers[4], mOutputDims.d[0] * mOutputDims.d[1] * mOutputDims.d[2] * sizeof(float)));
 
-	std::cout << "malloc cuda buffers success" << std::endl;
+	//std::cout << "malloc cuda buffers success" << std::endl;
 	cudaStream_t stream;
 	CHECK(cudaStreamCreate(&stream));
 	CHECK(cudaMemcpyAsync(buffers[0], data, mOutputDims.d[0] * 3 * INPUT_H * INPUT_W * sizeof(float), cudaMemcpyHostToDevice, stream));
-	std::cout << "malloc cuda input data success2" << std::endl;
+	//std::cout << "malloc cuda input data success2" << std::endl;
 	context->enqueue(1, buffers, stream, nullptr);
 	CHECK(cudaMemcpyAsync(prob, buffers[4], mOutputDims.d[0]  *mOutputDims.d[1] * mOutputDims.d[2] * sizeof(float), cudaMemcpyDeviceToHost, stream));
 	cudaStreamSynchronize(stream);
@@ -100,7 +97,7 @@ bool yoloRT::read_infer()
 	{
 		CHECK(cudaFree(buffers[i]));
 	}
-	std::cout << "inference sucess" << std::endl;
+	//std::cout << "inference sucess" << std::endl;
 	return true;
 }
 
@@ -116,26 +113,74 @@ bool yoloRT::verifyOutput()
 
 bool yoloRT::doMain()
 {
-	
-	Image img(mParams.imgRpath);
-	ori_img = img.get_oriImage();
+
 	if (!read_build())
 	{
 		std::cout << "model build defail" << std::endl;
 		return false;
 	}
-	if (!read_infer())
+	if (mParams.videoRFlag)
 	{
-		std::cout << "model infer defail" << std::endl;
+		flag = true;
+		v = new  Video(mParams.videoRurl);
+		if (mParams.videoSFlag)
+		{
+			v->create_videoMemory(mParams.videoWurl, 25);
+		}
+		
+	}
+	else
+	{
+		img = new Image(mParams.imgRpath);
+		
+	}
 
-		return false;
-	}
-	if (!verifyOutput())
+	while (1)
 	{
-		std::cout << "parser output or draw image defail" << std::endl;
-		return false;
+		if (mParams.videoRFlag)
+		{
+			
+			if (!v->get_frame(ori_img))
+			{
+				v->release();
+
+				break;
+			}
+		}
+		else
+		{
+			ori_img = img->get_oriImage();
+		}
+		if (!read_infer())
+		{
+			std::cout << "model infer defail" << std::endl;
+
+			return false;
+		}
+		if (!verifyOutput())
+		{
+			std::cout << "parser output or draw image defail" << std::endl;
+			return false;
+		}
+		if (mParams.videoRFlag)
+		{
+			v->draw(ori_img, detects);
+			v->write_video(ori_img);
+		}
+		else
+		{
+			img->draw(detects, mParams.imgWpath);
+
+		}
+
+		if (!flag)
+		{
+			break;
+		}
 	}
-	img.draw(detects, mParams.imgWpath);
+
+
+
 	return true;
 }
 

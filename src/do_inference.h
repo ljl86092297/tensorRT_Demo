@@ -8,6 +8,8 @@
 
 #include <cuda_runtime_api.h>
 #include "baseStruct.h"
+#include "image.h"
+#include "video.h"
 using samplesCommon::SampleUniquePtr;
 
 
@@ -33,12 +35,15 @@ public:
 	{
 		delete trtModelStream;
 		delete prob;
+		//delete img;
+		//delete v;
 	}
 
 private:
 	SampleParams mParams;
 
-
+	Image* img;
+	Video* v;
 	std::shared_ptr<nvinfer1::ICudaEngine>  mEngine;
 	IExecutionContext* context;
 	cv::Mat ori_img;
@@ -49,7 +54,7 @@ private:
 	std::string inputName;
 	std::string outputName;
 
-
+	bool flag{ false };
 	char* trtModelStream{ nullptr };
 	float* data{ nullptr };
 	float* prob{ nullptr };

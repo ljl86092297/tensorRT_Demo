@@ -68,13 +68,13 @@ bool Parser::paraseArgv(int argc, char** argv, SampleParams& params)
 		case 1:
 			params.imgWpath = res[1]; break;
 		case 2:
-			params.videoRurl = res[1]; break;
+			params.videoRurl = res[1]; params.videoRFlag = true; break;
 		case 3:
-			params.videoWurl = res[1]; break;
+			params.videoWurl = res[1]; params.videoSFlag = true;  break;
 		case 4:
 			params.loadEngine = res[1]; break;
 		case 5:
-			params.saveEngine = res[1]; break;
+			params.saveEngine = res[1]; params.savef = true; break;
 		case 6:
 			params.int8 = true; break;
 		case 7:

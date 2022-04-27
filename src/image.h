@@ -2,6 +2,8 @@
 #include<opencv2/opencv.hpp>
 #include"baseStruct.h"
 
+
+
 class Image
 {
 public:
@@ -17,7 +19,7 @@ public:
 		selforiImage = cv::imread(imgPath);
 
 	};
-	float round(float src, int bits);
+	//float round(float src, int bits);
 	bool draw(const std::vector<Detection>& dets, const std::string& wimgPath);
 	bool writeImg(cv::Mat& image);
 	bool wirteVideo();
